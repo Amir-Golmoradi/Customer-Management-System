@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:18-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secure-password
+      POSTGRES_DB: customers
+    ports:
+      - "5432:5432"  # Expose to host
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:

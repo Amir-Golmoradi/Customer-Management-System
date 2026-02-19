@@ -2,47 +2,57 @@ package main
 
 import (
 	"context"
-	"log"
+	"errors"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/Amir-Golmoradi/Customer-Management-System/internal/config"
-	"github.com/Amir-Golmoradi/Customer-Management-System/internal/customer"
-	"github.com/Amir-Golmoradi/Customer-Management-System/internal/database"
-	model "github.com/Amir-Golmoradi/Customer-Management-System/internal/database/generated"
-	"github.com/Amir-Golmoradi/Customer-Management-System/internal/handler"
+	"github.com/Amir-Golmoradi/Customer-Management-System/internal/app"
+	"github.com/Amir-Golmoradi/Customer-Management-System/internal/platform/config"
+	platformdb "github.com/Amir-Golmoradi/Customer-Management-System/internal/platform/database"
+	"github.com/Amir-Golmoradi/Customer-Management-System/internal/platform/logger"
 )
 
 func main() {
 	ctx := context.Background()
+
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal("Config error", err)
+		slog.Error("failed to load config", "error", err)
+		os.Exit(1)
 	}
 
-	// Create pgx connection pool
-	pool, err := database.NewConnectionPool(ctx, cfg.DatabaseURL)
+	log := logger.New(cfg.LogLevel)
+	pool, err := platformdb.NewConnectionPool(ctx, *cfg)
 	if err != nil {
-		log.Fatal("Config error", err)
+		log.Error("failed to initialize database", "error", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
-	queries := model.New(pool)
+	application := app.New(ctx, cfg, log, pool)
 
-	initializeHandler(queries)
-}
+	go func() {
+		log.Info("server_started", "port", cfg.HTTP.Port)
+		if err := application.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Error("server_error", "error", err)
+			os.Exit(1)
+		}
+	}()
 
-func initializeHandler(queries *model.Queries) {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	<-sigCh
 
-	customerRepo := customer.NewCustomerRepository(queries)
-	customerService := customer.NewService(customerRepo)
-	customerHandler := handler.NewHandler(customerService)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.HTTP.ShutdownTimeout)
+	defer cancel()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/customers", customerHandler.CreateCustomer)
-	mux.HandleFunc("/customer", customerHandler.GetCustomers)
-	server := &http.Server{
-		Addr:    ":8080",
-		Handler: mux,
+	if err := application.Server.Shutdown(shutdownCtx); err != nil {
+		log.Error("graceful_shutdown_failed", "error", err)
+		os.Exit(1)
 	}
-	log.Fatal("Running on port 8080 ", server.ListenAndServe())
+
+	log.Info("server_stopped")
 }

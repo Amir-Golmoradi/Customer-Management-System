@@ -6,3 +6,5 @@ CREATE TABLE customers (
   created_at TIMESTAMP DEFAULT now(),
   updated_at TIMESTAMP DEFAULT now()
 );
+
+CREATE INDEX IF NOT EXISTS idx_customers_created_at ON customers (created_at DESC);

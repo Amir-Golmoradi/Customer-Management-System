@@ -78,3 +78,14 @@ RETURNING
 -- name: DeleteCustomerByEmail :execrows
 DELETE FROM customers
 WHERE email = $1;
+-- name: ListCustomersPaginated :many
+SELECT
+    id,
+    name,
+    email,
+    password,
+    created_at,
+    updated_at
+FROM customers
+ORDER BY id
+LIMIT $1 OFFSET $2;

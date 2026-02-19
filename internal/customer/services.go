@@ -8,7 +8,11 @@ import (
 )
 
 type Service struct {
-	repository Repository
+	repository *Repository
+}
+
+func NewService(repository *Repository) *Service {
+	return &Service{repository: repository}
 }
 
 func (s *Service) GetCustomers(ctx context.Context) ([]database.Customer, error) {
@@ -46,7 +50,7 @@ func (s *Service) CreateCustomer(ctx context.Context, name, email, password stri
 func (s *Service) UpdateCustomer(ctx context.Context, id int32, name, email, password string) (*database.Customer, error) {
 	c, err := s.repository.UpdateExistingCustomer(ctx, id, name, email, password)
 	if err != nil {
-		return nil, fmt.Errorf("")
+		return nil, fmt.Errorf("no information has changed %w", err)
 	}
 	return c, nil
 }

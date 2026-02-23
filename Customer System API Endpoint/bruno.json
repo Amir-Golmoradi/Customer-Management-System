@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Customer System API Endpoint",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

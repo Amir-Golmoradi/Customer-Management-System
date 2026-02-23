@@ -101,6 +101,21 @@ func (h *Handler) GetCustomerByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toResponse(customer))
 }
 
+func (h *Handler) DeleteCustomerByID(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		writeError(w, r, errorsx.New(errorsx.KindValidation, "INVALID_ID", "id must be numeric", err))
+		return
+	}
+	customer, err := h.service.DeleteCustomerByID(r.Context(), int32(id))
+
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toResponse(customer))
+}
+
 func toResponse(customer *domain.Customer) customerResponse {
 	return customerResponse{
 		ID:        customer.ID,

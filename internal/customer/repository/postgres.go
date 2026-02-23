@@ -79,6 +79,10 @@ func (r *PostgresRepository) List(ctx context.Context, limit, offset int32) ([]d
 	return result, nil
 }
 
+func (r *PostgresRepository) DeleteByID(ctx context.Context, id int32) (*domain.Customer, error){
+	
+}
+
 func (r *PostgresRepository) observe(name string, start time.Time, err error) {
 	if r.observer != nil {
 		r.observer.ObserveDBQuery(name, time.Since(start), err != nil)

@@ -49,7 +49,7 @@ func New(_ context.Context, cfg *config.Config, log *slog.Logger, pool *pgxpool.
 	mux.HandleFunc("POST /v1/customers", customerHandler.CreateCustomer)
 	mux.HandleFunc("GET /v1/customers", customerHandler.ListCustomers)
 	mux.HandleFunc("GET /v1/customers/{id}", customerHandler.GetCustomerByID)
-
+	mux.HandleFunc("DELETE /v1/customers/{id}", customerHandler.DeleteCustomer)
 	handler := httpserver.Chain(
 		mux,
 		httpserver.RequestID,

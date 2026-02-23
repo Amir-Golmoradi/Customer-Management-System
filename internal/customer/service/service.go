@@ -50,6 +50,18 @@ func (s *Service) GetCustomerByID(ctx context.Context, id int32) (*domain.Custom
 	return customer, nil
 }
 
+func (s *Service) DeleteCustomerByID(ctx context.Context, id int32) (*domain.Customer, error) {
+	if id <= 0 {
+		return nil, errorsx.New(errorsx.KindValidation, "INVALID_ID", "id must be positive", nil)
+	}
+	customer, err := s.repo.DeleteByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return customer, nil
+
+}
+
 func (s *Service) ListCustomers(ctx context.Context, limit, offset int32) ([]domain.Customer, error) {
 	return s.repo.List(ctx, limit, offset)
 }
